@@ -298,7 +298,39 @@
 
     tbody tr:last-child td { border-bottom: 0; }
 
-    tbody tr:hover { background: color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+    tbody tr { cursor: pointer; }
+
+    tbody tr {
+      transition: opacity 160ms ease, filter 160ms ease, background-color 160ms ease;
+    }
+
+    tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+
+    tbody.has-selection tr:not(.is-selected):not(.is-comparison) {
+      filter: blur(1px);
+      opacity: 0.3;
+    }
+
+    tbody tr:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: -3px;
+    }
+
+    tbody tr.is-selected td {
+      background: var(--accent-soft);
+    }
+
+    tbody tr.is-selected td:first-child {
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    tbody tr.is-comparison td {
+      background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
+    }
+
+    tbody tr.is-comparison td:first-child {
+      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 62%, transparent);
+    }
 
     .model-name { font-weight: 750; }
 
@@ -446,7 +478,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .bar-fill { transition: none; }
+      .bar-fill, tbody tr { transition: none; }
     }
   </style>
 </head>
@@ -539,7 +571,7 @@
           </aside>
           <p>The estimated cost is calculated for the assumed token mix. Output is the visible output token assumption, adjusted by the selected reasoning multiplier.</p>
           <code class="formula">estimated cost = (input tokens ÷ 1,000,000 × input price) + (output tokens ÷ 1,000,000 × output price × reasoning multiplier)</code>
-          <p>Every score is normalized against the cheapest of the 15 configurations, so the baseline is always <strong>1.0×</strong>. This is an illustrative API-price proxy, not a promise about product behavior.</p>
+          <p>By default, every score is normalized against the cheapest of the 15 configurations, so the baseline is <strong>1.0×</strong>. Select a row to make it the <strong>1.0×</strong> reference and highlight the closest lower and higher combinations for the other models. This is an illustrative API-price proxy, not a promise about product behavior.</p>
         </div>
       </details>
 
@@ -589,6 +621,7 @@
       const status = document.querySelector('#status');
 
       let settings = loadSettings();
+      let selectedKey = null;
 
       function cloneDefaults() {
         return JSON.parse(JSON.stringify(DEFAULTS));
@@ -637,6 +670,10 @@
         return value.toLocaleString(undefined, { minimumFractionDigits: value % 1 ? 2 : 0, maximumFractionDigits: 2 });
       }
 
+      function getRowKey(row) {
+        return `${row.model.name}::${row.reasoning}`;
+      }
+
       function renderEffortInputs() {
         effortGrid.innerHTML = REASONING_LEVELS.map((level) => `
           <div>
@@ -674,11 +711,28 @@
           });
         });
 
-        const cheapest = Math.min(...rows.map((row) => row.cost));
-        rows.forEach((row) => {
-          row.score = cheapest > 0 ? row.cost / cheapest : 1;
-        });
         return rows;
+      }
+
+      function getComparisonKeys(rows, selected) {
+        const comparisonKeys = new Set();
+        if (!selected) return comparisonKeys;
+
+        // For each of the other models, pick the closest available level below
+        // and above the selected cost. This keeps comparisons model-to-model.
+        MODELS.filter((model) => model.name !== selected.model.name).forEach((model) => {
+          const sameModel = rows.filter((row) => row.model.name === model.name);
+          const below = sameModel
+            .filter((row) => row.cost < selected.cost)
+            .sort((a, b) => b.cost - a.cost)[0];
+          const above = sameModel
+            .filter((row) => row.cost > selected.cost)
+            .sort((a, b) => a.cost - b.cost)[0];
+
+          if (below) comparisonKeys.add(getRowKey(below));
+          if (above) comparisonKeys.add(getRowKey(above));
+        });
+        return comparisonKeys;
       }
 
       function sortRows(rows) {
@@ -694,19 +748,40 @@
       }
 
       function renderResults() {
-        const rows = sortRows(calculateRows());
-        const maxScore = Math.max(...rows.map((row) => row.score), 1);
-        resultsBody.innerHTML = rows.map((row) => {
+        const rows = calculateRows();
+        const selected = rows.find((row) => getRowKey(row) === selectedKey) || null;
+        const reference = selected || rows.reduce((cheapest, row) => row.cost < cheapest.cost ? row : cheapest, rows[0]);
+        rows.forEach((row) => {
+          row.score = reference.cost > 0 ? row.cost / reference.cost : 1;
+        });
+
+        const comparisonKeys = getComparisonKeys(rows, selected);
+        const referenceLabel = selected ? 'selected configuration' : 'cheapest configuration';
+        const sortedRows = sortRows(rows);
+        const focusRows = selected
+          ? sortedRows.filter((row) => getRowKey(row) === selectedKey || comparisonKeys.has(getRowKey(row))).sort((a, b) => a.cost - b.cost)
+          : [];
+        const remainingRows = selected
+          ? sortedRows.filter((row) => !focusRows.includes(row))
+          : sortedRows;
+        const displayRows = [...focusRows, ...remainingRows];
+        const maxScore = Math.max(...sortedRows.map((row) => row.score), 1);
+        resultsBody.className = selected ? 'has-selection' : '';
+        resultsBody.innerHTML = displayRows.map((row) => {
           const barWidth = Math.max((row.score / maxScore) * 100, 1.2);
+          const rowKey = getRowKey(row);
+          const isSelected = rowKey === selectedKey;
+          const isComparison = comparisonKeys.has(rowKey);
+          const rowClass = [isSelected ? 'is-selected' : '', isComparison ? 'is-comparison' : ''].filter(Boolean).join(' ');
           return `
-            <tr>
+            <tr class="${rowClass}" data-row-key="${rowKey}" tabindex="0" aria-selected="${isSelected}">
               <td><span class="model-name">${row.model.name}</span></td>
               <td><span class="reasoning-chip">${row.reasoning}</span></td>
               <td class="number">$${formatPrice(row.model.inputPrice)}</td>
               <td class="number">$${formatPrice(row.model.outputPrice)}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
               <td class="score-cell">
-                <div class="score-hover" title="Estimated cost: $${row.cost.toFixed(5)}" tabindex="0" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the cheapest configuration. Estimated cost: $${row.cost.toFixed(5)}.">
+                <div class="score-hover" title="Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. Estimated cost: $${row.cost.toFixed(5)}.">
                   <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div></div>
                 </div>
               </td>
@@ -714,8 +789,25 @@
           `;
         }).join('');
 
-        const base = rows.reduce((cheapest, row) => row.cost < cheapest.cost ? row : cheapest, rows[0]);
-        status.textContent = `Baseline: ${base.model.name} · ${base.reasoning} at ${base.score.toFixed(1)}× relative usage.`;
+        if (selected) {
+          status.textContent = `Selected: ${selected.model.name} · ${selected.reasoning} is 1.0×. Highlighted rows are the closest levels for the other models.`;
+        } else {
+          status.textContent = `Baseline: ${reference.model.name} · ${reference.reasoning} at 1.0× relative usage.`;
+        }
+
+        resultsBody.querySelectorAll('tr[data-row-key]').forEach((rowElement) => {
+          const selectRow = () => {
+            selectedKey = selectedKey === rowElement.dataset.rowKey ? null : rowElement.dataset.rowKey;
+            renderResults();
+          };
+          rowElement.addEventListener('click', selectRow);
+          rowElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectRow();
+            }
+          });
+        });
       }
 
       function syncControls() {

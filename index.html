@@ -19,6 +19,10 @@
       --accent: #3457d5;
       --accent-strong: #253fa8;
       --accent-soft: #e9edff;
+      --cheaper-row-bg: #edf8f1;
+      --cheaper-row-accent: #27864c;
+      --more-expensive-row-bg: #fff1ed;
+      --more-expensive-row-accent: #c15b3e;
       --warning-bg: #fff8e1;
       --warning-border: #e7c15a;
       --warning-text: #624c00;
@@ -40,6 +44,10 @@
         --accent: #9bacff;
         --accent-strong: #c3ceff;
         --accent-soft: #28345f;
+        --cheaper-row-bg: #153523;
+        --cheaper-row-accent: #81dda1;
+        --more-expensive-row-bg: #3d251f;
+        --more-expensive-row-accent: #ffad98;
         --warning-bg: #332c14;
         --warning-border: #927b28;
         --warning-text: #f4df83;
@@ -243,6 +251,7 @@
 
     .toolbar-right {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 8px;
     }
@@ -253,6 +262,11 @@
     }
 
     .sort-select { width: auto; min-width: 180px; }
+
+    .search-input {
+      width: 150px;
+      min-height: 34px;
+    }
 
     .sort-direction {
       width: 40px;
@@ -330,6 +344,22 @@
 
     tbody tr.is-comparison td:first-child {
       box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 62%, transparent);
+    }
+
+    tbody tr.is-cheaper td {
+      background: var(--cheaper-row-bg);
+    }
+
+    tbody tr.is-cheaper td:first-child {
+      box-shadow: inset 3px 0 0 var(--cheaper-row-accent);
+    }
+
+    tbody tr.is-more-expensive td {
+      background: var(--more-expensive-row-bg);
+    }
+
+    tbody tr.is-more-expensive td:first-child {
+      box-shadow: inset 3px 0 0 var(--more-expensive-row-accent);
     }
 
     .model-name { font-weight: 750; }
@@ -499,6 +529,8 @@
           <p class="status" id="status" role="status" aria-live="polite"></p>
         </div>
         <div class="toolbar-right">
+          <label for="search-input">Find</label>
+          <input id="search-input" class="search-input" type="search" placeholder="e.g. luna ex" aria-label="Find a model and reasoning level" autocomplete="off">
           <label for="sort-by">Sort by</label>
           <select id="sort-by" class="sort-select">
             <option value="model">Model</option>
@@ -614,6 +646,7 @@
       const outputTokens = document.querySelector('#output-tokens');
       const effortGrid = document.querySelector('#effort-grid');
       const resultsBody = document.querySelector('#results-body');
+      const searchInput = document.querySelector('#search-input');
       const sortBy = document.querySelector('#sort-by');
       const sortDirection = document.querySelector('#sort-direction');
       const resetButton = document.querySelector('#reset-button');
@@ -622,6 +655,7 @@
 
       let settings = loadSettings();
       let selectedKey = null;
+      let searchMessage = '';
 
       function cloneDefaults() {
         return JSON.parse(JSON.stringify(DEFAULTS));
@@ -672,6 +706,30 @@
 
       function getRowKey(row) {
         return `${row.model.name}::${row.reasoning}`;
+      }
+
+      function normalizeSearch(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      }
+
+      function findSearchMatch(rows, query) {
+        const tokens = normalizeSearch(query).split(/\s+/).filter(Boolean);
+        if (!tokens.length) return null;
+
+        const matches = rows.map((row, index) => {
+          const model = normalizeSearch(row.model.name);
+          const reasoning = normalizeSearch(row.reasoning);
+          const label = `${model} ${reasoning}`;
+          const words = label.split(' ');
+          if (!tokens.every((token) => label.includes(token))) return null;
+
+          // Prefer word-prefix matches, then shorter labels for broad queries.
+          const prefixPenalty = tokens.reduce((penalty, token) => penalty + (words.some((word) => word.startsWith(token)) ? 0 : 1), 0);
+          return { row, index, rank: prefixPenalty * 1000 + label.length };
+        }).filter(Boolean);
+
+        matches.sort((a, b) => a.rank - b.rank || a.index - b.index);
+        return matches[0]?.row || null;
       }
 
       function renderEffortInputs() {
@@ -772,7 +830,10 @@
           const rowKey = getRowKey(row);
           const isSelected = rowKey === selectedKey;
           const isComparison = comparisonKeys.has(rowKey);
-          const rowClass = [isSelected ? 'is-selected' : '', isComparison ? 'is-comparison' : ''].filter(Boolean).join(' ');
+          const comparisonDirection = isComparison && selected
+            ? row.cost < selected.cost ? 'is-cheaper' : 'is-more-expensive'
+            : '';
+          const rowClass = [isSelected ? 'is-selected' : '', isComparison ? 'is-comparison' : '', comparisonDirection].filter(Boolean).join(' ');
           return `
             <tr class="${rowClass}" data-row-key="${rowKey}" tabindex="0" aria-selected="${isSelected}">
               <td><span class="model-name">${row.model.name}</span></td>
@@ -791,6 +852,8 @@
 
         if (selected) {
           status.textContent = `Selected: ${selected.model.name} · ${selected.reasoning} is 1.0×. Highlighted rows are the closest levels for the other models.`;
+        } else if (searchMessage) {
+          status.textContent = searchMessage;
         } else {
           status.textContent = `Baseline: ${reference.model.name} · ${reference.reasoning} at 1.0× relative usage.`;
         }
@@ -798,6 +861,8 @@
         resultsBody.querySelectorAll('tr[data-row-key]').forEach((rowElement) => {
           const selectRow = () => {
             selectedKey = selectedKey === rowElement.dataset.rowKey ? null : rowElement.dataset.rowKey;
+            searchInput.value = '';
+            searchMessage = '';
             renderResults();
           };
           rowElement.addEventListener('click', selectRow);
@@ -830,6 +895,26 @@
         renderResults();
       });
 
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim();
+        if (!query) {
+          selectedKey = null;
+          searchMessage = '';
+          renderResults();
+          return;
+        }
+
+        const match = findSearchMatch(calculateRows(), query);
+        if (match) {
+          selectedKey = getRowKey(match);
+          searchMessage = '';
+        } else {
+          selectedKey = null;
+          searchMessage = `No model or reasoning level matches “${query}”.`;
+        }
+        renderResults();
+      });
+
       outputTokens.addEventListener('input', () => {
         settings.outputTokens = readNumberInput(outputTokens, settings.outputTokens);
         saveSettings();
@@ -851,6 +936,9 @@
 
       resetButton.addEventListener('click', () => {
         settings = cloneDefaults();
+        selectedKey = null;
+        searchInput.value = '';
+        searchMessage = '';
         saveSettings();
         syncControls();
         renderEffortInputs();

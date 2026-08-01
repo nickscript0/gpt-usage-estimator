@@ -232,7 +232,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 16px 20px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -265,9 +265,9 @@
 
     table {
       width: 100%;
-      min-width: 850px;
+      min-width: 760px;
       border-collapse: collapse;
-      font-size: 0.87rem;
+      font-size: 0.8rem;
     }
 
     caption {
@@ -280,7 +280,7 @@
     }
 
     th, td {
-      padding: 13px 16px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border);
       text-align: left;
       vertical-align: middle;
@@ -289,7 +289,7 @@
     th {
       background: var(--surface-muted);
       color: var(--text-muted);
-      font-size: 0.71rem;
+      font-size: 0.65rem;
       font-weight: 750;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -302,23 +302,15 @@
 
     .model-name { font-weight: 750; }
 
-    .model-price {
-      display: block;
-      margin-top: 2px;
-      color: var(--text-muted);
-      font-size: 0.73rem;
-      font-weight: 500;
-    }
-
     .reasoning-chip {
       display: inline-flex;
       align-items: center;
-      min-height: 25px;
-      padding: 3px 8px;
+      min-height: 22px;
+      padding: 2px 7px;
       border-radius: 999px;
       background: var(--accent-soft);
       color: var(--accent-strong);
-      font-size: 0.77rem;
+      font-size: 0.72rem;
       font-weight: 750;
     }
 
@@ -327,7 +319,7 @@
       white-space: nowrap;
     }
 
-    .score-cell { min-width: 190px; }
+    .score-cell { min-width: 160px; }
 
     .score-hover {
       border-radius: 4px;
@@ -341,20 +333,20 @@
 
     .score-line {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 6px;
     }
 
     .score-value {
-      font-size: 0.9rem;
+      flex: 0 0 34px;
+      font-size: 0.82rem;
       font-weight: 800;
     }
 
     .bar-track {
+      flex: 1;
       width: 100%;
-      height: 8px;
+      height: 6px;
       overflow: hidden;
       border-radius: 999px;
       background: var(--bar-track);
@@ -428,10 +420,10 @@
     }
 
     .status {
-      min-height: 1.4em;
-      margin-top: 12px;
+      min-height: 1.2em;
+      margin-top: 4px;
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: 0.72rem;
     }
 
     @media (max-width: 900px) {
@@ -708,15 +700,14 @@
           const barWidth = Math.max((row.score / maxScore) * 100, 1.2);
           return `
             <tr>
-              <td><span class="model-name">${row.model.name}</span><span class="model-price">API proxy</span></td>
+              <td><span class="model-name">${row.model.name}</span></td>
               <td><span class="reasoning-chip">${row.reasoning}</span></td>
               <td class="number">$${formatPrice(row.model.inputPrice)}</td>
               <td class="number">$${formatPrice(row.model.outputPrice)}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
               <td class="score-cell">
                 <div class="score-hover" title="Estimated cost: $${row.cost.toFixed(5)}" tabindex="0" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the cheapest configuration. Estimated cost: $${row.cost.toFixed(5)}.">
-                  <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><span class="model-price">vs. cheapest</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div>
+                  <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div></div>
                 </div>
               </td>
             </tr>

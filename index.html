@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>GPT-5.6 Usage Estimator</title>
+  <style>
+    /* The page uses system colors by default and switches the same tokens for dark mode. */
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --border: #d9e0e7;
+      --border-strong: #b9c4cf;
+      --text: #17212b;
+      --text-muted: #5c6975;
+      --accent: #3457d5;
+      --accent-strong: #253fa8;
+      --accent-soft: #e9edff;
+      --warning-bg: #fff8e1;
+      --warning-border: #e7c15a;
+      --warning-text: #624c00;
+      --bar-track: #e5eaf0;
+      --shadow: 0 10px 28px rgba(24, 36, 48, 0.06);
+      --focus: rgba(52, 87, 213, 0.3);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #101419;
+        --surface: #171d24;
+        --surface-muted: #1d252e;
+        --border: #303b47;
+        --border-strong: #4b5967;
+        --text: #edf2f7;
+        --text-muted: #a8b4bf;
+        --accent: #9bacff;
+        --accent-strong: #c3ceff;
+        --accent-soft: #28345f;
+        --warning-bg: #332c14;
+        --warning-border: #927b28;
+        --warning-text: #f4df83;
+        --bar-track: #2b353f;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        --focus: rgba(155, 172, 255, 0.42);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html { font-size: 16px; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 56px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1, h2, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(1.65rem, 3vw, 2.35rem);
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+    }
+
+    .eyebrow {
+      margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 750;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .intro {
+      max-width: 690px;
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: 0.97rem;
+    }
+
+    .notice {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid var(--warning-border);
+      border-radius: 10px;
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      font-size: 0.9rem;
+    }
+
+    .notice strong { white-space: nowrap; }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.7fr) minmax(180px, 0.7fr) minmax(280px, 1.6fr) auto;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .control-group { min-width: 0; }
+
+    label, .control-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+      font-size: 0.77rem;
+      font-weight: 700;
+      letter-spacing: 0.025em;
+      text-transform: uppercase;
+    }
+
+    input, select, button {
+      min-height: 40px;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+    }
+
+    input, select { width: 100%; padding: 8px 10px; }
+
+    input[type="number"] { font-variant-numeric: tabular-nums; }
+
+    input:focus-visible, select:focus-visible, button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 1px;
+    }
+
+    .unit-input {
+      position: relative;
+    }
+
+    .unit-input input { padding-right: 66px; }
+
+    .unit-input span {
+      position: absolute;
+      top: 50%;
+      right: 11px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .effort-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(64px, 1fr));
+      gap: 7px;
+    }
+
+    .effort-grid input { min-width: 0; padding-inline: 7px; }
+
+    .effort-name {
+      display: block;
+      overflow: hidden;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .control-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    button:hover { border-color: var(--accent); }
+
+    .button-primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button-primary:hover { border-color: var(--accent-strong); background: var(--accent-strong); }
+
+    .button-quiet { background: var(--surface-muted); }
+
+    .control-footnote {
+      grid-column: 1 / -1;
+      margin-top: -4px;
+      color: var(--text-muted);
+      font-size: 0.79rem;
+    }
+
+    .table-card { margin-top: 20px; overflow: hidden; }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-right label {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .sort-select { width: auto; min-width: 180px; }
+
+    .sort-direction {
+      width: 40px;
+      padding-inline: 0;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+
+    caption {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    th, td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      font-size: 0.71rem;
+      font-weight: 750;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    tbody tr:hover { background: color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+
+    .model-name { font-weight: 750; }
+
+    .model-price {
+      display: block;
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 0.73rem;
+      font-weight: 500;
+    }
+
+    .reasoning-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 0.77rem;
+      font-weight: 750;
+    }
+
+    .number {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .score-cell { min-width: 190px; }
+
+    .score-hover {
+      border-radius: 4px;
+      cursor: help;
+    }
+
+    .score-hover:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 4px;
+    }
+
+    .score-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .score-value {
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--bar-track);
+    }
+
+    .bar-fill {
+      height: 100%;
+      min-width: 3px;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width 180ms ease;
+    }
+
+    .empty-state {
+      padding: 24px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .below-table {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    details {
+      overflow: hidden;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 16px 18px;
+      font-size: 0.88rem;
+      font-weight: 750;
+    }
+
+    details[open] summary { border-bottom: 1px solid var(--border); }
+
+    .details-copy {
+      margin: 0;
+      padding: 12px 18px 16px;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+    }
+
+    .details-copy .notice {
+      margin: 0 0 14px;
+    }
+
+    .controls-disclosure .controls {
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .formula {
+      display: block;
+      margin: 10px 0;
+      padding: 10px 12px;
+      overflow-x: auto;
+      border-radius: 7px;
+      background: var(--surface-muted);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 900px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .control-group:nth-child(3), .control-actions, .control-footnote { grid-column: 1 / -1; }
+      .control-actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 20px, 1180px); padding-top: 24px; }
+      header { display: block; }
+      .intro { font-size: 0.9rem; }
+      .controls { grid-template-columns: 1fr; padding: 16px; }
+      .control-group:nth-child(3), .control-actions, .control-footnote { grid-column: auto; }
+      .effort-grid { gap: 5px; }
+      .table-toolbar { display: block; padding: 14px 16px; }
+      .toolbar-right { margin-top: 12px; }
+      .sort-select { flex: 1; min-width: 0; }
+      .table-toolbar .sort-direction { flex: 0 0 40px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bar-fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Planning proxy · GPT-5.6</p>
+        <h1>Usage estimator</h1>
+        <p class="intro">Compare a simple, editable cost proxy across Luna, Terra, and Sol at different reasoning levels.</p>
+      </div>
+    </header>
+
+    <section class="card table-card" aria-labelledby="comparison-title">
+      <div class="table-toolbar">
+        <div>
+          <h2 id="comparison-title">Estimated relative usage</h2>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="toolbar-right">
+          <label for="sort-by">Sort by</label>
+          <select id="sort-by" class="sort-select">
+            <option value="model">Model</option>
+            <option value="reasoning">Reasoning level</option>
+            <option value="cost">Estimated cost</option>
+            <option value="score" selected>Relative usage</option>
+          </select>
+          <button id="sort-direction" class="sort-direction" type="button" aria-label="Sort ascending" title="Sort ascending">↑</button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Heuristic GPT-5.6 model and reasoning usage comparison</caption>
+          <thead>
+            <tr>
+              <th scope="col">Model</th>
+              <th scope="col">Reasoning</th>
+              <th scope="col">API input<br>$/1M tokens</th>
+              <th scope="col">API output<br>$/1M tokens</th>
+              <th scope="col">Multiplier</th>
+              <th scope="col" class="score-cell">Relative usage score</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="below-table" aria-label="Inputs and method notes">
+      <details class="controls-disclosure">
+        <summary>Inputs &amp; assumptions</summary>
+        <div class="controls" role="group" aria-labelledby="assumptions-title">
+          <div class="control-group">
+            <label for="input-tokens">Assumed input tokens</label>
+            <div class="unit-input">
+              <input id="input-tokens" type="number" min="0" step="100" inputmode="numeric" aria-describedby="input-help">
+              <span>tokens</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="output-tokens">Visible output tokens</label>
+            <div class="unit-input">
+              <input id="output-tokens" type="number" min="0" step="100" inputmode="numeric" aria-describedby="input-help">
+              <span>tokens</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span id="assumptions-title" class="control-label">Reasoning multipliers <span aria-hidden="true">·</span> editable assumptions</span>
+            <div class="effort-grid" id="effort-grid" aria-labelledby="assumptions-title"></div>
+          </div>
+
+          <div class="control-actions">
+            <button id="reset-button" class="button-quiet" type="button">Reset defaults</button>
+            <button id="export-button" class="button-primary" type="button">Export settings</button>
+          </div>
+
+          <p class="control-footnote" id="input-help">Values are saved in this browser on edit. Prices are fixed API price assumptions shown in the table.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>How the estimate works</summary>
+        <div class="details-copy">
+          <aside class="notice" aria-label="Important estimate disclaimer">
+            <strong>Heuristic estimate</strong>
+            <span>These results are not actual ChatGPT Plus usage limits. OpenAI does not publish an exact mapping from Plus allowances to token cost or reasoning effort.</span>
+          </aside>
+          <p>The estimated cost is calculated for the assumed token mix. Output is the visible output token assumption, adjusted by the selected reasoning multiplier.</p>
+          <code class="formula">estimated cost = (input tokens ÷ 1,000,000 × input price) + (output tokens ÷ 1,000,000 × output price × reasoning multiplier)</code>
+          <p>Every score is normalized against the cheapest of the 15 configurations, so the baseline is always <strong>1.0×</strong>. This is an illustrative API-price proxy, not a promise about product behavior.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Default assumptions</summary>
+        <div class="details-copy">
+          <p>Defaults use 900 assumed input tokens, 1,200 visible output tokens, and illustrative effort multipliers of 1.0×, 1.4×, 2.0×, 2.8×, and 4.0× from low through max. Edit them in Inputs &amp; assumptions for your own scenario.</p>
+          <p>Model prices are fixed here as: Luna $1 / $6, Terra $2.50 / $15, and Sol $5 / $30 per 1M input / output tokens.</p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    // All data and behavior live in this file so it can be opened directly with file://.
+    (() => {
+      const STORAGE_KEY = 'gpt-56-usage-estimator-settings';
+      const DEFAULTS = {
+        inputTokens: 900,
+        outputTokens: 1200,
+        multipliers: {
+          low: 1,
+          medium: 1.4,
+          high: 2,
+          'extra high': 2.8,
+          max: 4
+        },
+        sortBy: 'score',
+        descending: false
+      };
+
+      const MODELS = [
+        { name: 'GPT-5.6 Luna', inputPrice: 1, outputPrice: 6 },
+        { name: 'GPT-5.6 Terra', inputPrice: 2.5, outputPrice: 15 },
+        { name: 'GPT-5.6 Sol', inputPrice: 5, outputPrice: 30 }
+      ];
+      const REASONING_LEVELS = ['low', 'medium', 'high', 'extra high', 'max'];
+
+      const inputTokens = document.querySelector('#input-tokens');
+      const outputTokens = document.querySelector('#output-tokens');
+      const effortGrid = document.querySelector('#effort-grid');
+      const resultsBody = document.querySelector('#results-body');
+      const sortBy = document.querySelector('#sort-by');
+      const sortDirection = document.querySelector('#sort-direction');
+      const resetButton = document.querySelector('#reset-button');
+      const exportButton = document.querySelector('#export-button');
+      const status = document.querySelector('#status');
+
+      let settings = loadSettings();
+
+      function cloneDefaults() {
+        return JSON.parse(JSON.stringify(DEFAULTS));
+      }
+
+      function loadSettings() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (!saved || typeof saved !== 'object') return cloneDefaults();
+          return sanitizeSettings(saved);
+        } catch (error) {
+          return cloneDefaults();
+        }
+      }
+
+      function sanitizeSettings(candidate) {
+        const clean = cloneDefaults();
+        const positiveNumber = (value, fallback) => {
+          const number = Number(value);
+          return Number.isFinite(number) && number >= 0 ? number : fallback;
+        };
+
+        clean.inputTokens = positiveNumber(candidate.inputTokens, clean.inputTokens);
+        clean.outputTokens = positiveNumber(candidate.outputTokens, clean.outputTokens);
+        REASONING_LEVELS.forEach((level) => {
+          clean.multipliers[level] = positiveNumber(candidate.multipliers?.[level], clean.multipliers[level]);
+        });
+        clean.sortBy = ['model', 'reasoning', 'cost', 'score'].includes(candidate.sortBy) ? candidate.sortBy : clean.sortBy;
+        clean.descending = Boolean(candidate.descending);
+        return clean;
+      }
+
+      function saveSettings() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch (error) {
+          // localStorage may be unavailable in a locked-down browser; the estimator still works.
+        }
+      }
+
+      function formatNumber(value, maximumFractionDigits = 2) {
+        return new Intl.NumberFormat(undefined, { maximumFractionDigits }).format(value);
+      }
+
+      function formatPrice(value) {
+        return value.toLocaleString(undefined, { minimumFractionDigits: value % 1 ? 2 : 0, maximumFractionDigits: 2 });
+      }
+
+      function renderEffortInputs() {
+        effortGrid.innerHTML = REASONING_LEVELS.map((level) => `
+          <div>
+            <label class="effort-name" for="multiplier-${level.replace(' ', '-')}">${level}</label>
+            <input id="multiplier-${level.replace(' ', '-')}" data-level="${level}" type="number" min="0" step="0.1" inputmode="decimal" aria-label="${level} reasoning multiplier">
+          </div>
+        `).join('');
+
+        effortGrid.querySelectorAll('input').forEach((input) => {
+          input.value = settings.multipliers[input.dataset.level];
+          input.addEventListener('input', () => {
+            const value = Number(input.value);
+            if (Number.isFinite(value) && value >= 0) {
+              settings.multipliers[input.dataset.level] = value;
+              saveSettings();
+              renderResults();
+            }
+          });
+        });
+      }
+
+      function readNumberInput(input, fallback) {
+        const value = Number(input.value);
+        return Number.isFinite(value) && value >= 0 ? value : fallback;
+      }
+
+      function calculateRows() {
+        const rows = [];
+        MODELS.forEach((model) => {
+          REASONING_LEVELS.forEach((reasoning) => {
+            const multiplier = settings.multipliers[reasoning];
+            const cost = (settings.inputTokens / 1000000 * model.inputPrice) +
+              (settings.outputTokens / 1000000 * model.outputPrice * multiplier);
+            rows.push({ model, reasoning, multiplier, cost });
+          });
+        });
+
+        const cheapest = Math.min(...rows.map((row) => row.cost));
+        rows.forEach((row) => {
+          row.score = cheapest > 0 ? row.cost / cheapest : 1;
+        });
+        return rows;
+      }
+
+      function sortRows(rows) {
+        const key = sortBy.value;
+        const direction = settings.descending ? -1 : 1;
+        return rows.sort((a, b) => {
+          let comparison;
+          if (key === 'model') comparison = a.model.name.localeCompare(b.model.name);
+          else if (key === 'reasoning') comparison = REASONING_LEVELS.indexOf(a.reasoning) - REASONING_LEVELS.indexOf(b.reasoning);
+          else comparison = a[key] - b[key];
+          return comparison * direction;
+        });
+      }
+
+      function renderResults() {
+        const rows = sortRows(calculateRows());
+        const maxScore = Math.max(...rows.map((row) => row.score), 1);
+        resultsBody.innerHTML = rows.map((row) => {
+          const barWidth = Math.max((row.score / maxScore) * 100, 1.2);
+          return `
+            <tr>
+              <td><span class="model-name">${row.model.name}</span><span class="model-price">API proxy</span></td>
+              <td><span class="reasoning-chip">${row.reasoning}</span></td>
+              <td class="number">$${formatPrice(row.model.inputPrice)}</td>
+              <td class="number">$${formatPrice(row.model.outputPrice)}</td>
+              <td class="number">${formatNumber(row.multiplier, 1)}×</td>
+              <td class="score-cell">
+                <div class="score-hover" title="Estimated cost: $${row.cost.toFixed(5)}" tabindex="0" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the cheapest configuration. Estimated cost: $${row.cost.toFixed(5)}.">
+                  <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><span class="model-price">vs. cheapest</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        const base = rows.reduce((cheapest, row) => row.cost < cheapest.cost ? row : cheapest, rows[0]);
+        status.textContent = `Baseline: ${base.model.name} · ${base.reasoning} at ${base.score.toFixed(1)}× relative usage.`;
+      }
+
+      function syncControls() {
+        inputTokens.value = settings.inputTokens;
+        outputTokens.value = settings.outputTokens;
+        sortBy.value = settings.sortBy;
+        updateSortButton();
+      }
+
+      function updateSortButton() {
+        const label = settings.descending ? 'descending' : 'ascending';
+        sortDirection.textContent = settings.descending ? '↓' : '↑';
+        sortDirection.setAttribute('aria-label', `Sort ${label}`);
+        sortDirection.title = `Sort ${label}`;
+      }
+
+      inputTokens.addEventListener('input', () => {
+        settings.inputTokens = readNumberInput(inputTokens, settings.inputTokens);
+        saveSettings();
+        renderResults();
+      });
+
+      outputTokens.addEventListener('input', () => {
+        settings.outputTokens = readNumberInput(outputTokens, settings.outputTokens);
+        saveSettings();
+        renderResults();
+      });
+
+      sortBy.addEventListener('change', () => {
+        settings.sortBy = sortBy.value;
+        saveSettings();
+        renderResults();
+      });
+
+      sortDirection.addEventListener('click', () => {
+        settings.descending = !settings.descending;
+        saveSettings();
+        updateSortButton();
+        renderResults();
+      });
+
+      resetButton.addEventListener('click', () => {
+        settings = cloneDefaults();
+        saveSettings();
+        syncControls();
+        renderEffortInputs();
+        renderResults();
+        status.textContent = 'Defaults restored and saved.';
+      });
+
+      exportButton.addEventListener('click', () => {
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          description: 'GPT-5.6 usage estimator heuristic settings',
+          ...settings
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'gpt-5.6-usage-estimator-settings.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        status.textContent = 'Settings exported as JSON.';
+      });
+
+      syncControls();
+      renderEffortInputs();
+      renderResults();
+    })();
+  </script>
+</body>
+</html>

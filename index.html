@@ -236,12 +236,27 @@
     .table-card { margin-top: 20px; overflow: hidden; }
 
     .table-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      display: block;
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
+    }
+
+    .table-heading {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 10px 12px;
+    }
+
+    .table-heading label {
+      display: inline;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .heading-divider {
+      color: var(--text-muted);
+      font-weight: 700;
     }
 
     h2 {
@@ -249,29 +264,42 @@
       letter-spacing: -0.01em;
     }
 
-    .toolbar-right {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .toolbar-right label {
-      margin: 0;
-      white-space: nowrap;
-    }
-
-    .sort-select { width: auto; min-width: 180px; }
-
     .search-input {
-      width: 150px;
-      min-height: 34px;
+      width: 200px;
+      min-height: 30px;
+      padding: 4px 9px;
     }
 
-    .sort-direction {
-      width: 40px;
-      padding-inline: 0;
-      font-size: 1.1rem;
+    .sort-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      text-align: left;
+      text-transform: inherit;
+    }
+
+    .sort-header:hover {
+      border-color: transparent;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .sort-header[data-active="true"] {
+      color: var(--accent);
+    }
+
+    .sort-indicator {
+      min-width: 0.7em;
+      color: var(--accent);
+      font-size: 0.8rem;
       line-height: 1;
     }
 
@@ -501,10 +529,8 @@
       .controls { grid-template-columns: 1fr; padding: 16px; }
       .control-group:nth-child(3), .control-actions, .control-footnote { grid-column: auto; }
       .effort-grid { gap: 5px; }
-      .table-toolbar { display: block; padding: 14px 16px; }
-      .toolbar-right { margin-top: 12px; }
-      .sort-select { flex: 1; min-width: 0; }
-      .table-toolbar .sort-direction { flex: 0 0 40px; }
+      .table-toolbar { padding: 14px 16px; }
+      .table-heading { flex-wrap: wrap; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -524,22 +550,13 @@
 
     <section class="card table-card" aria-labelledby="comparison-title">
       <div class="table-toolbar">
-        <div>
+        <div class="table-heading">
           <h2 id="comparison-title">Estimated relative usage</h2>
-          <p class="status" id="status" role="status" aria-live="polite"></p>
-        </div>
-        <div class="toolbar-right">
+          <span class="heading-divider" aria-hidden="true">·</span>
           <label for="search-input">Find</label>
-          <input id="search-input" class="search-input" type="search" placeholder="e.g. luna ex" aria-label="Find a model and reasoning level" autocomplete="off">
-          <label for="sort-by">Sort by</label>
-          <select id="sort-by" class="sort-select">
-            <option value="model">Model</option>
-            <option value="reasoning">Reasoning level</option>
-            <option value="cost">Estimated cost</option>
-            <option value="score" selected>Relative usage</option>
-          </select>
-          <button id="sort-direction" class="sort-direction" type="button" aria-label="Sort ascending" title="Sort ascending">↑</button>
+          <input id="search-input" class="search-input" type="search" placeholder="e.g. luna ex" aria-label="Find a model and reasoning level" autocomplete="off" autofocus>
         </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
       </div>
 
       <div class="table-scroll">
@@ -547,10 +564,10 @@
           <caption>Heuristic GPT-5.6 model and reasoning usage comparison</caption>
           <thead>
             <tr>
-              <th scope="col">Model</th>
-              <th scope="col">Reasoning</th>
-              <th scope="col">Multiplier</th>
-              <th scope="col" class="score-cell">Relative usage score</th>
+              <th scope="col" data-sort-key="model"><button class="sort-header" type="button" data-sort="model">Model <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-sort-key="reasoning"><button class="sort-header" type="button" data-sort="reasoning">Reasoning <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-sort-key="multiplier"><button class="sort-header" type="button" data-sort="multiplier">Multiplier <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="score-cell" data-sort-key="score" title="Sort by relative usage / estimated cost"><button class="sort-header" type="button" data-sort="score">Relative usage score <span class="sort-indicator" aria-hidden="true"></span></button></th>
             </tr>
           </thead>
           <tbody id="results-body"></tbody>
@@ -645,8 +662,7 @@
       const effortGrid = document.querySelector('#effort-grid');
       const resultsBody = document.querySelector('#results-body');
       const searchInput = document.querySelector('#search-input');
-      const sortBy = document.querySelector('#sort-by');
-      const sortDirection = document.querySelector('#sort-direction');
+      const sortHeaders = document.querySelectorAll('.sort-header');
       const resetButton = document.querySelector('#reset-button');
       const exportButton = document.querySelector('#export-button');
       const status = document.querySelector('#status');
@@ -681,7 +697,8 @@
         REASONING_LEVELS.forEach((level) => {
           clean.multipliers[level] = positiveNumber(candidate.multipliers?.[level], clean.multipliers[level]);
         });
-        clean.sortBy = ['model', 'reasoning', 'cost', 'score'].includes(candidate.sortBy) ? candidate.sortBy : clean.sortBy;
+        const requestedSort = candidate.sortBy === 'cost' ? 'score' : candidate.sortBy;
+        clean.sortBy = ['model', 'reasoning', 'multiplier', 'score'].includes(requestedSort) ? requestedSort : clean.sortBy;
         clean.descending = Boolean(candidate.descending);
         return clean;
       }
@@ -792,7 +809,7 @@
       }
 
       function sortRows(rows) {
-        const key = sortBy.value;
+        const key = settings.sortBy;
         const direction = settings.descending ? -1 : 1;
         return rows.sort((a, b) => {
           let comparison;
@@ -874,15 +891,20 @@
       function syncControls() {
         inputTokens.value = settings.inputTokens;
         outputTokens.value = settings.outputTokens;
-        sortBy.value = settings.sortBy;
-        updateSortButton();
+        updateSortHeaders();
       }
 
-      function updateSortButton() {
-        const label = settings.descending ? 'descending' : 'ascending';
-        sortDirection.textContent = settings.descending ? '↓' : '↑';
-        sortDirection.setAttribute('aria-label', `Sort ${label}`);
-        sortDirection.title = `Sort ${label}`;
+      function updateSortHeaders() {
+        sortHeaders.forEach((header) => {
+          const isActive = header.dataset.sort === settings.sortBy;
+          const direction = settings.descending ? 'descending' : 'ascending';
+          const label = header.textContent.trim();
+          const indicator = header.querySelector('.sort-indicator');
+          header.dataset.active = String(isActive);
+          header.closest('th').setAttribute('aria-sort', isActive ? direction : 'none');
+          header.setAttribute('aria-label', `Sort by ${label}${isActive ? `, ${direction}` : ''}`);
+          indicator.textContent = isActive ? (settings.descending ? '↓' : '↑') : '';
+        });
       }
 
       inputTokens.addEventListener('input', () => {
@@ -917,17 +939,18 @@
         renderResults();
       });
 
-      sortBy.addEventListener('change', () => {
-        settings.sortBy = sortBy.value;
-        saveSettings();
-        renderResults();
-      });
-
-      sortDirection.addEventListener('click', () => {
-        settings.descending = !settings.descending;
-        saveSettings();
-        updateSortButton();
-        renderResults();
+      sortHeaders.forEach((header) => {
+        header.addEventListener('click', () => {
+          if (settings.sortBy === header.dataset.sort) {
+            settings.descending = !settings.descending;
+          } else {
+            settings.sortBy = header.dataset.sort;
+            settings.descending = false;
+          }
+          saveSettings();
+          updateSortHeaders();
+          renderResults();
+        });
       });
 
       resetButton.addEventListener('click', () => {
@@ -963,6 +986,7 @@
       syncControls();
       renderEffortInputs();
       renderResults();
+      searchInput.focus();
     })();
   </script>
 </body>

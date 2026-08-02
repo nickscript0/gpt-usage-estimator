@@ -851,10 +851,13 @@
           ? sortedRows.filter((row) => !focusRows.includes(row))
           : sortedRows;
         const displayRows = [...focusRows, ...remainingRows];
-        const maxScore = Math.max(...sortedRows.map((row) => row.score), 1);
+        const barRows = selected
+          ? sortedRows.filter((row) => getRowKey(row) === selectedKey || comparisonKeys.has(getRowKey(row)))
+          : sortedRows;
+        const maxBarScore = Math.max(...barRows.map((row) => row.score), 1);
         resultsBody.className = selected ? 'has-selection' : '';
         resultsBody.innerHTML = displayRows.map((row) => {
-          const barWidth = Math.max((row.score / maxScore) * 100, 1.2);
+          const barWidth = Math.min(Math.max((row.score / maxBarScore) * 100, 1.2), 100);
           const rowKey = getRowKey(row);
           const isSelected = rowKey === selectedKey;
           const isComparison = comparisonKeys.has(rowKey);

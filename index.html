@@ -279,7 +279,7 @@
 
     table {
       width: 100%;
-      min-width: 760px;
+      min-width: 640px;
       border-collapse: collapse;
       font-size: 0.8rem;
     }
@@ -549,8 +549,6 @@
             <tr>
               <th scope="col">Model</th>
               <th scope="col">Reasoning</th>
-              <th scope="col">API input<br>$/1M tokens</th>
-              <th scope="col">API output<br>$/1M tokens</th>
               <th scope="col">Multiplier</th>
               <th scope="col" class="score-cell">Relative usage score</th>
             </tr>
@@ -838,11 +836,9 @@
             <tr class="${rowClass}" data-row-key="${rowKey}" tabindex="0" aria-selected="${isSelected}">
               <td><span class="model-name">${row.model.name}</span></td>
               <td><span class="reasoning-chip">${row.reasoning}</span></td>
-              <td class="number">$${formatPrice(row.model.inputPrice)}</td>
-              <td class="number">$${formatPrice(row.model.outputPrice)}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
               <td class="score-cell">
-                <div class="score-hover" title="Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. Estimated cost: $${row.cost.toFixed(5)}.">
+                <div class="score-hover" title="API input: $${formatPrice(row.model.inputPrice)} / 1M tokens · API output: $${formatPrice(row.model.outputPrice)} / 1M tokens · Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. API input: $${formatPrice(row.model.inputPrice)} per 1M tokens. API output: $${formatPrice(row.model.outputPrice)} per 1M tokens. Estimated cost: $${row.cost.toFixed(5)}.">
                   <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div></div>
                 </div>
               </td>

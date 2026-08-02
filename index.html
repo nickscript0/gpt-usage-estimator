@@ -233,7 +233,12 @@
       font-size: 0.79rem;
     }
 
-    .table-card { margin-top: 20px; overflow: hidden; }
+    .table-card {
+      width: max-content;
+      max-width: 100%;
+      margin-top: 20px;
+      overflow: hidden;
+    }
 
     .table-toolbar {
       display: block;
@@ -306,10 +311,14 @@
     .table-scroll { overflow-x: auto; }
 
     table {
-      width: 100%;
-      min-width: 640px;
+      width: max-content;
+      min-width: 0;
       border-collapse: collapse;
       font-size: 0.8rem;
+    }
+
+    th:not(.score-cell), td:not(.score-cell) {
+      white-space: nowrap;
     }
 
     caption {
@@ -409,7 +418,11 @@
       white-space: nowrap;
     }
 
-    .score-cell { min-width: 160px; }
+    .score-cell {
+      width: 300px;
+      min-width: 300px;
+      max-width: 300px;
+    }
 
     .score-hover {
       border-radius: 4px;

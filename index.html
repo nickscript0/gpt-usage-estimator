@@ -419,12 +419,16 @@
     }
 
     .coding-index-cell {
-      min-width: 94px;
+      width: 1%;
+      min-width: 0;
+      padding-inline: 6px;
       text-align: right;
     }
 
     .deepswe-cell {
-      min-width: 118px;
+      width: 1%;
+      min-width: 0;
+      padding-inline: 6px;
       text-align: right;
     }
 
@@ -589,8 +593,8 @@
             <tr>
               <th scope="col" data-sort-key="model"><button class="sort-header" type="button" data-sort="model">Model <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="reasoning"><button class="sort-header" type="button" data-sort="reasoning">Reasoning <span class="sort-indicator" aria-hidden="true"></span></button></th>
-              <th scope="col" class="coding-index-cell" data-sort-key="codingIndex" title="Artificial Analysis Coding Index, captured August 3, 2026"><button class="sort-header" type="button" data-sort="codingIndex">Coding Index <span class="sort-indicator" aria-hidden="true"></span></button></th>
-              <th scope="col" class="deepswe-cell" data-sort-key="deepSWE" title="DeepSWE v1.1 Pass@1 rating, 113 tasks, updated July 25, 2026"><button class="sort-header" type="button" data-sort="deepSWE">DeepSWE (Pass@1) <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="coding-index-cell" data-sort-key="codingIndex" title="Artificial Analysis Coding Index, captured August 3, 2026"><button class="sort-header" type="button" data-sort="codingIndex">AA Coding Index <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="deepswe-cell" data-sort-key="deepSWE" title="DeepSWE v1.1 Pass@1 rating, 113 tasks, updated July 25, 2026"><button class="sort-header" type="button" data-sort="deepSWE">DeepSWE <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="multiplier"><button class="sort-header" type="button" data-sort="multiplier">Multiplier <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="score-cell" data-sort-key="score" title="Sort by relative usage / estimated cost"><button class="sort-header" type="button" data-sort="score">Relative usage score <span class="sort-indicator" aria-hidden="true"></span></button></th>
             </tr>
@@ -659,7 +663,7 @@
         <summary>Sources</summary>
         <div class="details-copy">
           <p>Coding Index scores are a manually maintained snapshot from the displayed model chart on <a href="https://artificialanalysis.ai/models/capabilities/coding?utm_source=chatgpt.com&amp;models=gpt-5-6-sol%2Cgpt-5-6-terra%2Cgpt-5-6-luna%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-sol-low%2Cgpt-5-6-terra-xhigh%2Cgpt-5-6-terra-high%2Cgpt-5-6-terra-medium%2Cgpt-5-6-terra-low%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-luna-high%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cdeepseek-v4-flash%2Cdeepseek-v4-pro" target="_blank" rel="noopener noreferrer">Artificial Analysis Coding Index</a>, captured August 3, 2026. The chart’s headline score is an equal-weighted average of Terminal-Bench v2.1 and SciCode; this dashboard copies those displayed scores rather than recalculating them. The chart’s “xhigh” setting is shown with the same “xhigh” label here.</p>
-          <p>DeepSWE Pass@1 ratings are a manually maintained snapshot from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE leaderboard</a>, version 1.1, covering 113 tasks and updated July 25, 2026. The values were transcribed from the leaderboard's “All effort levels” view and are shown as the published percentage plus/minus its reported uncertainty. DeepSWE's “xhigh” setting uses the “xhigh” reasoning label here. This dashboard includes the Pass@1 scores only; the leaderboard's average cost, output-token, and agent-step metrics are not included.</p>
+          <p>DeepSWE Pass@1 ratings are a manually maintained snapshot from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE leaderboard</a>, version 1.1, covering 113 tasks and updated July 25, 2026. The values were transcribed from the leaderboard's “All effort levels” view and are shown as the published percentage. DeepSWE's “xhigh” setting uses the “xhigh” reasoning label here. This dashboard includes the Pass@1 scores only; the leaderboard's uncertainty, average cost, output-token, and agent-step metrics are not included.</p>
         </div>
       </details>
     </section>
@@ -890,10 +894,10 @@
           const isSelected = rowKey === selectedKey;
           const isComparison = comparisonKeys.has(rowKey);
           const deepSWEValue = row.deepSWE
-            ? `${formatNumber(row.deepSWE.score, 0)}% ±${formatNumber(row.deepSWE.uncertainty, 0)}%`
+            ? `${formatNumber(row.deepSWE.score, 0)}%`
             : '—';
           const deepSWEDescription = row.deepSWE
-            ? `DeepSWE v1.1 Pass@1 rating for ${row.reasoning} reasoning: ${formatNumber(row.deepSWE.score, 0)} percent plus or minus ${formatNumber(row.deepSWE.uncertainty, 0)} percentage points, based on 113 tasks; leaderboard updated July 25, 2026.`
+            ? `DeepSWE v1.1 Pass@1 rating for ${row.reasoning} reasoning: ${formatNumber(row.deepSWE.score, 0)} percent, based on 113 tasks; leaderboard updated July 25, 2026.`
             : 'No DeepSWE v1.1 Pass@1 rating published for this reasoning level.';
           const comparisonDirection = isComparison && selected
             ? row.cost < selected.cost ? 'is-cheaper' : 'is-more-expensive'

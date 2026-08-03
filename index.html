@@ -418,6 +418,11 @@
       white-space: nowrap;
     }
 
+    .coding-index-cell {
+      min-width: 94px;
+      text-align: right;
+    }
+
     .score-cell {
       width: 300px;
       min-width: 300px;
@@ -579,6 +584,7 @@
             <tr>
               <th scope="col" data-sort-key="model"><button class="sort-header" type="button" data-sort="model">Model <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="reasoning"><button class="sort-header" type="button" data-sort="reasoning">Reasoning <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="coding-index-cell" data-sort-key="codingIndex" title="Artificial Analysis Coding Index, captured August 3, 2026"><button class="sort-header" type="button" data-sort="codingIndex">Coding Index <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="multiplier"><button class="sort-header" type="button" data-sort="multiplier">Multiplier <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="score-cell" data-sort-key="score" title="Sort by relative usage / estimated cost"><button class="sort-header" type="button" data-sort="score">Relative usage score <span class="sort-indicator" aria-hidden="true"></span></button></th>
             </tr>
@@ -642,6 +648,13 @@
           <p>Model prices are fixed here as: Luna $1 / $6, Terra $2.50 / $15, and Sol $5 / $30 per 1M input / output tokens.</p>
         </div>
       </details>
+
+      <details>
+        <summary>Sources</summary>
+        <div class="details-copy">
+          <p>Coding Index scores are a manually maintained snapshot from the displayed model chart on <a href="https://artificialanalysis.ai/models/capabilities/coding?utm_source=chatgpt.com&amp;models=gpt-5-6-sol%2Cgpt-5-6-terra%2Cgpt-5-6-luna%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-sol-low%2Cgpt-5-6-terra-xhigh%2Cgpt-5-6-terra-high%2Cgpt-5-6-terra-medium%2Cgpt-5-6-terra-low%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-luna-high%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cdeepseek-v4-flash%2Cdeepseek-v4-pro" target="_blank" rel="noopener noreferrer">Artificial Analysis Coding Index</a>, captured August 3, 2026. The chart’s headline score is an equal-weighted average of Terminal-Bench v2.1 and SciCode; this dashboard copies those displayed scores rather than recalculating them. Their “xhigh” setting maps to “extra high” here.</p>
+        </div>
+      </details>
     </section>
   </main>
 
@@ -664,9 +677,9 @@
       };
 
       const MODELS = [
-        { name: 'GPT-5.6 Luna', inputPrice: 1, outputPrice: 6 },
-        { name: 'GPT-5.6 Terra', inputPrice: 2.5, outputPrice: 15 },
-        { name: 'GPT-5.6 Sol', inputPrice: 5, outputPrice: 30 }
+        { name: 'GPT-5.6 Luna', inputPrice: 1, outputPrice: 6, codingIndex: { low: 44, medium: 51, high: 63, 'extra high': 69, max: 71 } },
+        { name: 'GPT-5.6 Terra', inputPrice: 2.5, outputPrice: 15, codingIndex: { low: 58, medium: 65, high: 67, 'extra high': 71, max: 77 } },
+        { name: 'GPT-5.6 Sol', inputPrice: 5, outputPrice: 30, codingIndex: { low: 70, medium: 76, high: 77, 'extra high': 78, max: 77 } }
       ];
       const REASONING_LEVELS = ['low', 'medium', 'high', 'extra high', 'max'];
 
@@ -711,7 +724,7 @@
           clean.multipliers[level] = positiveNumber(candidate.multipliers?.[level], clean.multipliers[level]);
         });
         const requestedSort = candidate.sortBy === 'cost' ? 'score' : candidate.sortBy;
-        clean.sortBy = ['model', 'reasoning', 'multiplier', 'score'].includes(requestedSort) ? requestedSort : clean.sortBy;
+        clean.sortBy = ['model', 'reasoning', 'codingIndex', 'multiplier', 'score'].includes(requestedSort) ? requestedSort : clean.sortBy;
         clean.descending = Boolean(candidate.descending);
         return clean;
       }
@@ -793,7 +806,7 @@
             const multiplier = settings.multipliers[reasoning];
             const cost = (settings.inputTokens / 1000000 * model.inputPrice) +
               (settings.outputTokens / 1000000 * model.outputPrice * multiplier);
-            rows.push({ model, reasoning, multiplier, cost });
+            rows.push({ model, reasoning, codingIndex: model.codingIndex[reasoning], multiplier, cost });
           });
         });
 
@@ -869,6 +882,7 @@
             <tr class="${rowClass}" data-row-key="${rowKey}" tabindex="0" aria-selected="${isSelected}">
               <td><span class="model-name">${row.model.name}</span></td>
               <td><span class="reasoning-chip">${row.reasoning}</span></td>
+              <td class="number coding-index-cell" title="Artificial Analysis Coding Index score, captured August 3, 2026">${formatNumber(row.codingIndex, 0)}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
               <td class="score-cell">
                 <div class="score-hover" title="API input: $${formatPrice(row.model.inputPrice)} / 1M tokens · API output: $${formatPrice(row.model.outputPrice)} / 1M tokens · Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. API input: $${formatPrice(row.model.inputPrice)} per 1M tokens. API output: $${formatPrice(row.model.outputPrice)} per 1M tokens. Estimated cost: $${row.cost.toFixed(5)}.">

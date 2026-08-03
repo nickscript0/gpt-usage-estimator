@@ -658,8 +658,8 @@
       <details>
         <summary>Sources</summary>
         <div class="details-copy">
-          <p>Coding Index scores are a manually maintained snapshot from the displayed model chart on <a href="https://artificialanalysis.ai/models/capabilities/coding?utm_source=chatgpt.com&amp;models=gpt-5-6-sol%2Cgpt-5-6-terra%2Cgpt-5-6-luna%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-sol-low%2Cgpt-5-6-terra-xhigh%2Cgpt-5-6-terra-high%2Cgpt-5-6-terra-medium%2Cgpt-5-6-terra-low%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-luna-high%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cdeepseek-v4-flash%2Cdeepseek-v4-pro" target="_blank" rel="noopener noreferrer">Artificial Analysis Coding Index</a>, captured August 3, 2026. The chart’s headline score is an equal-weighted average of Terminal-Bench v2.1 and SciCode; this dashboard copies those displayed scores rather than recalculating them. Their “xhigh” setting maps to “extra high” here.</p>
-          <p>DeepSWE Pass@1 ratings are a manually maintained snapshot from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE leaderboard</a>, version 1.1, covering 113 tasks and updated July 25, 2026. The values were transcribed from the leaderboard's “All effort levels” view and are shown as the published percentage plus/minus its reported uncertainty. DeepSWE's “xhigh” setting is mapped to this dashboard's “extra high” reasoning level. This dashboard includes the Pass@1 scores only; the leaderboard's average cost, output-token, and agent-step metrics are not included.</p>
+          <p>Coding Index scores are a manually maintained snapshot from the displayed model chart on <a href="https://artificialanalysis.ai/models/capabilities/coding?utm_source=chatgpt.com&amp;models=gpt-5-6-sol%2Cgpt-5-6-terra%2Cgpt-5-6-luna%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-sol-low%2Cgpt-5-6-terra-xhigh%2Cgpt-5-6-terra-high%2Cgpt-5-6-terra-medium%2Cgpt-5-6-terra-low%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-luna-high%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cdeepseek-v4-flash%2Cdeepseek-v4-pro" target="_blank" rel="noopener noreferrer">Artificial Analysis Coding Index</a>, captured August 3, 2026. The chart’s headline score is an equal-weighted average of Terminal-Bench v2.1 and SciCode; this dashboard copies those displayed scores rather than recalculating them. The chart’s “xhigh” setting is shown with the same “xhigh” label here.</p>
+          <p>DeepSWE Pass@1 ratings are a manually maintained snapshot from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE leaderboard</a>, version 1.1, covering 113 tasks and updated July 25, 2026. The values were transcribed from the leaderboard's “All effort levels” view and are shown as the published percentage plus/minus its reported uncertainty. DeepSWE's “xhigh” setting uses the “xhigh” reasoning label here. This dashboard includes the Pass@1 scores only; the leaderboard's average cost, output-token, and agent-step metrics are not included.</p>
         </div>
       </details>
     </section>
@@ -676,7 +676,7 @@
           low: 1,
           medium: 1.4,
           high: 2,
-          'extra high': 2.8,
+          xhigh: 2.8,
           max: 4
         },
         sortBy: 'score',
@@ -684,11 +684,11 @@
       };
 
       const MODELS = [
-        { name: 'GPT-5.6 Luna', inputPrice: 1, outputPrice: 6, codingIndex: { low: 44, medium: 51, high: 63, 'extra high': 69, max: 71 }, deepSWE: { low: { score: 2, uncertainty: 1 }, medium: { score: 11, uncertainty: 1 }, high: { score: 44, uncertainty: 3 }, 'extra high': { score: 57, uncertainty: 2 }, max: { score: 67, uncertainty: 4 } } },
-        { name: 'GPT-5.6 Terra', inputPrice: 2.5, outputPrice: 15, codingIndex: { low: 58, medium: 65, high: 67, 'extra high': 71, max: 77 }, deepSWE: { low: { score: 24, uncertainty: 1 }, medium: { score: 35, uncertainty: 3 }, high: { score: 54, uncertainty: 4 }, 'extra high': { score: 60, uncertainty: 2 }, max: { score: 70, uncertainty: 3 } } },
-        { name: 'GPT-5.6 Sol', inputPrice: 5, outputPrice: 30, codingIndex: { low: 70, medium: 76, high: 77, 'extra high': 78, max: 77 }, deepSWE: { low: { score: 45, uncertainty: 2 }, medium: { score: 61, uncertainty: 2 }, high: { score: 69, uncertainty: 1 }, 'extra high': { score: 71, uncertainty: 1 }, max: { score: 73, uncertainty: 3 } } }
+        { name: 'GPT-5.6 Luna', inputPrice: 1, outputPrice: 6, codingIndex: { low: 44, medium: 51, high: 63, xhigh: 69, max: 71 }, deepSWE: { low: { score: 2, uncertainty: 1 }, medium: { score: 11, uncertainty: 1 }, high: { score: 44, uncertainty: 3 }, xhigh: { score: 57, uncertainty: 2 }, max: { score: 67, uncertainty: 4 } } },
+        { name: 'GPT-5.6 Terra', inputPrice: 2.5, outputPrice: 15, codingIndex: { low: 58, medium: 65, high: 67, xhigh: 71, max: 77 }, deepSWE: { low: { score: 24, uncertainty: 1 }, medium: { score: 35, uncertainty: 3 }, high: { score: 54, uncertainty: 4 }, xhigh: { score: 60, uncertainty: 2 }, max: { score: 70, uncertainty: 3 } } },
+        { name: 'GPT-5.6 Sol', inputPrice: 5, outputPrice: 30, codingIndex: { low: 70, medium: 76, high: 77, xhigh: 78, max: 77 }, deepSWE: { low: { score: 45, uncertainty: 2 }, medium: { score: 61, uncertainty: 2 }, high: { score: 69, uncertainty: 1 }, xhigh: { score: 71, uncertainty: 1 }, max: { score: 73, uncertainty: 3 } } }
       ];
-      const REASONING_LEVELS = ['low', 'medium', 'high', 'extra high', 'max'];
+      const REASONING_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
       const inputTokens = document.querySelector('#input-tokens');
       const outputTokens = document.querySelector('#output-tokens');

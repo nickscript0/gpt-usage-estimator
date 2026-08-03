@@ -433,8 +433,39 @@
     }
 
     .coding-index-cell .sort-header,
-    .deepswe-cell .sort-header {
+    .deepswe-cell .sort-header,
+    .value-cell .sort-header {
       justify-content: center;
+    }
+
+    .value-cell {
+      width: 1%;
+      min-width: 154px;
+      padding-inline: 8px;
+      text-align: right;
+    }
+
+    .value-metric {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .best-value {
+      display: inline-flex;
+      align-items: center;
+      min-height: 19px;
+      padding: 1px 5px;
+      border: 1px solid color-mix(in srgb, var(--cheaper-row-accent) 55%, var(--border));
+      border-radius: 999px;
+      background: var(--cheaper-row-bg);
+      color: var(--cheaper-row-accent);
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
     }
 
     .score-cell {
@@ -601,6 +632,7 @@
               <th scope="col" class="coding-index-cell" data-sort-key="codingIndex" title="Artificial Analysis Coding Index, captured August 3, 2026"><button class="sort-header" type="button" data-sort="codingIndex">AA Coding Index <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="deepswe-cell" data-sort-key="deepSWE" title="DeepSWE v1.1 Pass@1 rating, 113 tasks, updated July 25, 2026"><button class="sort-header" type="button" data-sort="deepSWE">DeepSWE <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="multiplier"><button class="sort-header" type="button" data-sort="multiplier">Multiplier <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="value-cell" data-sort-key="costPerPoint" title="Estimated request cost divided by the equal-weighted average of Coding Index and DeepSWE; lower is better"><button class="sort-header" type="button" data-sort="costPerPoint">Cost / point <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="score-cell" data-sort-key="score" title="Sort by relative usage / estimated cost"><button class="sort-header" type="button" data-sort="score">Relative usage score <span class="sort-indicator" aria-hidden="true"></span></button></th>
             </tr>
           </thead>
@@ -652,6 +684,10 @@
           </aside>
           <p>The estimated cost is calculated for the assumed token mix. Output is the visible output token assumption, adjusted by the selected reasoning multiplier.</p>
           <code class="formula">estimated cost = (input tokens ÷ 1,000,000 × input price) + (output tokens ÷ 1,000,000 × output price × reasoning multiplier)</code>
+          <p>Combined performance is the equal-weighted average of the two displayed benchmark scores. The cost-per-point value uses the estimated request cost, so it changes with the editable token and reasoning assumptions.</p>
+          <code class="formula">combined performance = (AA Coding Index + DeepSWE Pass@1) ÷ 2</code>
+          <code class="formula">cost per point = estimated cost ÷ combined performance</code>
+          <p>Lower cost-per-point values are more cost-effective. Equal raw weighting is a transparent heuristic; the benchmark scores measure different things and are not a validated universal performance index.</p>
           <p>By default, every score is normalized against the cheapest of the 15 configurations, so the baseline is <strong>1.0×</strong>. Select a row to make it the <strong>1.0×</strong> reference and highlight the closest lower and higher combinations for the other models. This is an illustrative API-price proxy, not a promise about product behavior.</p>
         </div>
       </details>
@@ -740,7 +776,7 @@
           clean.multipliers[level] = positiveNumber(candidate.multipliers?.[level], clean.multipliers[level]);
         });
         const requestedSort = candidate.sortBy === 'cost' ? 'score' : candidate.sortBy;
-        clean.sortBy = ['model', 'reasoning', 'codingIndex', 'deepSWE', 'multiplier', 'score'].includes(requestedSort) ? requestedSort : clean.sortBy;
+        clean.sortBy = ['model', 'reasoning', 'codingIndex', 'deepSWE', 'multiplier', 'costPerPoint', 'score'].includes(requestedSort) ? requestedSort : clean.sortBy;
         clean.descending = Boolean(candidate.descending);
         return clean;
       }
@@ -759,6 +795,11 @@
 
       function formatPrice(value) {
         return value.toLocaleString(undefined, { minimumFractionDigits: value % 1 ? 2 : 0, maximumFractionDigits: 2 });
+      }
+
+      function formatCostPerPoint(value) {
+        if (value == null) return '—';
+        return `$${value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 6 })}`;
       }
 
       function getRowKey(row) {
@@ -822,7 +863,13 @@
             const multiplier = settings.multipliers[reasoning];
             const cost = (settings.inputTokens / 1000000 * model.inputPrice) +
               (settings.outputTokens / 1000000 * model.outputPrice * multiplier);
-            rows.push({ model, reasoning, codingIndex: model.codingIndex[reasoning], deepSWE: model.deepSWE[reasoning], multiplier, cost });
+            const codingIndex = model.codingIndex[reasoning];
+            const deepSWE = model.deepSWE[reasoning];
+            const performanceScore = Number.isFinite(codingIndex) && Number.isFinite(deepSWE?.score)
+              ? (codingIndex + deepSWE.score) / 2
+              : null;
+            const costPerPoint = performanceScore > 0 ? cost / performanceScore : null;
+            rows.push({ model, reasoning, codingIndex, deepSWE, multiplier, cost, performanceScore, costPerPoint });
           });
         });
 
@@ -865,6 +912,14 @@
             if (bScore == null) return -1;
             comparison = aScore - bScore;
           }
+          else if (key === 'costPerPoint') {
+            const aValue = a.costPerPoint;
+            const bValue = b.costPerPoint;
+            if (aValue == null && bValue == null) return 0;
+            if (aValue == null) return 1;
+            if (bValue == null) return -1;
+            comparison = aValue - bValue;
+          }
           else comparison = a[key] - b[key];
           return comparison * direction;
         });
@@ -874,6 +929,13 @@
         const rows = calculateRows();
         const selected = rows.find((row) => getRowKey(row) === selectedKey) || null;
         const reference = selected || rows.reduce((cheapest, row) => row.cost < cheapest.cost ? row : cheapest, rows[0]);
+        const finiteValueRows = rows.filter((row) => Number.isFinite(row.costPerPoint));
+        const bestCostPerPoint = finiteValueRows.length
+          ? Math.min(...finiteValueRows.map((row) => row.costPerPoint))
+          : null;
+        const bestValueKeys = new Set(finiteValueRows
+          .filter((row) => Math.abs(row.costPerPoint - bestCostPerPoint) <= Math.max(1e-12, Math.abs(bestCostPerPoint) * 1e-9))
+          .map(getRowKey));
         rows.forEach((row) => {
           row.score = reference.cost > 0 ? row.cost / reference.cost : 1;
         });
@@ -898,6 +960,7 @@
           const rowKey = getRowKey(row);
           const isSelected = rowKey === selectedKey;
           const isComparison = comparisonKeys.has(rowKey);
+          const isBestValue = bestValueKeys.has(rowKey);
           const deepSWEValue = row.deepSWE
             ? `${formatNumber(row.deepSWE.score, 0)}%`
             : '—';
@@ -908,6 +971,10 @@
             ? row.cost < selected.cost ? 'is-cheaper' : 'is-more-expensive'
             : '';
           const rowClass = [isSelected ? 'is-selected' : '', isComparison ? 'is-comparison' : '', comparisonDirection].filter(Boolean).join(' ');
+          const costPerPointValue = formatCostPerPoint(row.costPerPoint);
+          const costPerPointDescription = row.costPerPoint == null
+            ? 'Cost per point is unavailable because both benchmark scores must be present and combined performance must be greater than zero.'
+            : `Estimated cost per combined benchmark point: ${costPerPointValue}. Combined performance: ${formatNumber(row.performanceScore, 1)}. Lower is better.${isBestValue ? ' Best value under the current assumptions.' : ''}`;
           return `
             <tr class="${rowClass}" data-row-key="${rowKey}" tabindex="0" aria-selected="${isSelected}">
               <td><span class="model-name">${row.model.name}</span></td>
@@ -915,6 +982,9 @@
               <td class="number coding-index-cell" title="Artificial Analysis Coding Index score, captured August 3, 2026">${formatNumber(row.codingIndex, 0)}</td>
               <td class="number deepswe-cell" title="${deepSWEDescription}" aria-label="${deepSWEDescription}">${deepSWEValue}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
+              <td class="number value-cell" title="${costPerPointDescription}" aria-label="${costPerPointDescription}">
+                <span class="value-metric"><span>${costPerPointValue}</span>${isBestValue ? '<span class="best-value">Best value</span>' : ''}</span>
+              </td>
               <td class="score-cell">
                 <div class="score-hover" title="API input: $${formatPrice(row.model.inputPrice)} / 1M tokens · API output: $${formatPrice(row.model.outputPrice)} / 1M tokens · Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. API input: $${formatPrice(row.model.inputPrice)} per 1M tokens. API output: $${formatPrice(row.model.outputPrice)} per 1M tokens. Estimated cost: $${row.cost.toFixed(5)}.">
                   <div class="score-line"><span class="score-value">${row.score.toFixed(1)}×</span><div class="bar-track"><div class="bar-fill" style="width: ${barWidth}%"></div></div></div>
@@ -959,7 +1029,7 @@
         sortHeaders.forEach((header) => {
           const isActive = header.dataset.sort === settings.sortBy;
           const direction = settings.descending ? 'descending' : 'ascending';
-          const label = header.textContent.trim();
+          const label = header.firstChild?.textContent?.trim() || header.textContent.trim();
           const indicator = header.querySelector('.sort-indicator');
           header.dataset.active = String(isActive);
           header.closest('th').setAttribute('aria-sort', isActive ? direction : 'none');

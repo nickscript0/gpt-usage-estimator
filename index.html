@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>GPT Usage Estimator</title>
+  <title>GPT &amp; Claude Usage Estimator</title>
   <style>
     /* The page uses system colors by default and switches the same tokens for dark mode. */
     :root {
@@ -608,9 +608,9 @@
   <main class="shell">
     <header>
       <div>
-        <p class="eyebrow">Planning proxy · GPT models</p>
+        <p class="eyebrow">Planning proxy · GPT and Claude models</p>
         <h1>Usage estimator</h1>
-        <p class="intro">Compare a simple, editable cost proxy across GPT-5.6 and GPT-6 models at different reasoning levels.</p>
+        <p class="intro">Compare a simple, editable cost proxy across GPT-5.6, GPT-6, and Claude Opus 5.5 models at different reasoning levels.</p>
       </div>
     </header>
 
@@ -620,20 +620,20 @@
           <h2 id="comparison-title">Estimated relative usage</h2>
           <span class="heading-divider" aria-hidden="true">·</span>
           <label for="search-input">Find</label>
-          <input id="search-input" class="search-input" type="search" placeholder="e.g. luna ex" aria-label="Find a model and reasoning level" autocomplete="off" autofocus>
+          <input id="search-input" class="search-input" type="search" placeholder="e.g. Opus 5.5 max" aria-label="Find a model and reasoning level" autocomplete="off" autofocus>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </div>
 
       <div class="table-scroll">
         <table>
-          <caption>Heuristic GPT model and reasoning usage comparison</caption>
+          <caption>Heuristic GPT and Claude model and reasoning usage comparison</caption>
           <thead>
             <tr>
               <th scope="col" data-sort-key="model"><button class="sort-header" type="button" data-sort="model">Model <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="reasoning"><button class="sort-header" type="button" data-sort="reasoning">Reasoning <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="coding-index-cell" data-sort-key="codingIndex" title="Artificial Analysis Coding Index, captured September 7, 2026"><button class="sort-header" type="button" data-sort="codingIndex">AA Coding Index <span class="sort-indicator" aria-hidden="true"></span></button></th>
-              <th scope="col" class="frontier-code-cell" data-sort-key="frontierCode" title="FrontierCode 1.1 Main Score, 100 tasks, captured September 22, 2026"><button class="sort-header" type="button" data-sort="frontierCode">FrontierCode <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" class="frontier-code-cell" data-sort-key="frontierCode" title="FrontierCode 1.1 Main Score, 100 tasks; snapshot dates are listed in each score's tooltip"><button class="sort-header" type="button" data-sort="frontierCode">FrontierCode <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="deepswe-cell" data-sort-key="deepSWE" title="DeepSWE v1.1 Pass@1 rating, 113 tasks; sources vary by model"><button class="sort-header" type="button" data-sort="deepSWE">DeepSWE <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" data-sort-key="multiplier"><button class="sort-header" type="button" data-sort="multiplier">Multiplier <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th scope="col" class="value-cell" data-sort-key="costPerPoint" title="Estimated request cost divided by the equal-weighted average of available Coding Index, FrontierCode, and DeepSWE scores, displayed multiplied by 1,000; lower is better"><button class="sort-header" type="button" data-sort="costPerPoint">Cost / perf <span class="sort-indicator" aria-hidden="true"></span></button></th>
@@ -684,7 +684,7 @@
         <div class="details-copy">
           <aside class="notice" aria-label="Important estimate disclaimer">
             <strong>Heuristic estimate</strong>
-            <span>These results are not actual ChatGPT Plus usage limits. OpenAI does not publish an exact mapping from Plus allowances to token cost or reasoning effort.</span>
+            <span>This is not an actual ChatGPT Plus or Claude subscription usage limit. It estimates API costs from per-token prices, not consumer app allowances.</span>
           </aside>
           <p>The estimated cost is calculated for the assumed token mix. Output is the visible output token assumption, adjusted by the selected reasoning multiplier.</p>
           <code class="formula">estimated cost = (input tokens ÷ 1,000,000 × input price) + (output tokens ÷ 1,000,000 × output price × reasoning multiplier)</code>
@@ -693,7 +693,7 @@
           <code class="formula">cost per point = estimated cost ÷ combined performance</code>
           <p>The table displays cost per point multiplied by 1,000 and rounded to three decimals. Sorting and winner selection use the unscaled value.</p>
           <p>Lower cost-per-point values are more cost-effective. Equal raw weighting is a transparent heuristic; benchmark coverage varies by row, and the scores measure different things. This is not a validated universal performance index.</p>
-          <p>By default, every score is normalized against the cheapest of the 30 configurations, so the baseline is <strong>1.0×</strong>. Select a row to make it the <strong>1.0×</strong> reference and highlight the closest lower and higher combinations for the other models. This is an illustrative API-price proxy, not a promise about product behavior.</p>
+          <p>By default, every score is normalized against the cheapest of the 35 configurations, so the baseline is <strong>1.0×</strong>. Select a row to make it the <strong>1.0×</strong> reference and highlight the closest lower and higher combinations for the other models. This is an illustrative API-price proxy, not a promise about product behavior.</p>
         </div>
       </details>
 
@@ -701,17 +701,17 @@
         <summary>Default assumptions</summary>
         <div class="details-copy">
           <p>Defaults use 900 assumed input tokens, 1,200 visible output tokens, and illustrative effort multipliers of 1.0×, 1.4×, 2.0×, 2.8×, and 4.0× from low through max. Edit them in Inputs &amp; assumptions for your own scenario.</p>
-          <p>Standard API prices per 1M input / output tokens are fixed here as: GPT-5.6 Luna $0.20 / $1.20, Terra $2 / $12, Sol $4 / $20; GPT-6 Luna $0.10 / $0.50, Sol $2 / $10, and Astra $10 / $50.</p>
+          <p>Standard API prices per 1M input / output tokens are fixed here as: GPT-5.6 Luna $0.20 / $1.20, Terra $2 / $12, Sol $4 / $20; Claude Opus 5.5 $4 / $20; GPT-6 Luna $0.10 / $0.50, Sol $2 / $10, and Astra $10 / $50.</p>
         </div>
       </details>
 
       <details>
         <summary>Sources</summary>
         <div class="details-copy">
-          <p>Standard API token prices come from the <a href="https://developers.openai.com/api/docs/models" target="_blank" rel="noopener noreferrer">OpenAI model catalog</a>, including <a href="https://developers.openai.com/api/docs/models/gpt-6-sol" target="_blank" rel="noopener noreferrer">GPT-6 Sol</a> and <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noopener noreferrer">GPT-6 Luna</a>. Cached input, cache writes, Batch, Flex, Fast mode, tools, and long-context surcharges are not included.</p>
-          <p>Coding Index scores are a manually maintained snapshot calculated from component results in <a href="https://artificialanalysis.ai/models/gpt-6-astra-high" target="_blank" rel="noopener noreferrer">Artificial Analysis model data</a>, captured September 7, 2026. Each score is the equal-weighted average of Terminal-Bench v2.1 and SciCode, rounded to the nearest integer. GPT-6 Sol and Luna have a dash until both component scores are verified. Artificial Analysis’s “xhigh” setting uses the same “xhigh” label here.</p>
-          <p>FrontierCode scores are a manually maintained snapshot of the <a href="https://cognition.com/frontiercode" target="_blank" rel="noopener noreferrer">Cognition FrontierCode 1.1 Main leaderboard</a> (100 tasks), captured September 22, 2026 from its “All reasoning levels” view. The displayed percentage is Cognition's weighted rubric score, not its pass rate.</p>
-          <p>Existing DeepSWE Pass@1 ratings are a manually maintained snapshot from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE v1.1 leaderboard</a> (113 tasks), captured September 3, 2026 from its “All effort levels” view. The GPT-6 Sol and Luna max scores are <a href="https://openai.com/index/introducing-gpt-6-sol-and-luna/" target="_blank" rel="noopener noreferrer">OpenAI-reported</a> results published September 22, 2026; their other effort scores were not listed on the public DeepSWE leaderboard when checked. This dashboard uses Pass@1 scores only, excluding the leaderboard's cost, output-token, and agent-step metrics.</p>
+          <p>Standard API token prices come from the <a href="https://developers.openai.com/api/docs/models" target="_blank" rel="noopener noreferrer">OpenAI model catalog</a>, including <a href="https://developers.openai.com/api/docs/models/gpt-6-sol" target="_blank" rel="noopener noreferrer">GPT-6 Sol</a> and <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noopener noreferrer">GPT-6 Luna</a>, and <a href="https://platform.claude.com/docs/en/models/opus-5-5/overview" target="_blank" rel="noopener noreferrer">Anthropic's Claude Opus 5.5 model pricing</a>. Cached input, cache writes, Batch, Flex, Fast mode, tools, and long-context surcharges are not included.</p>
+          <p>Coding Index scores are a manually maintained snapshot calculated from component results in <a href="https://artificialanalysis.ai/models/gpt-6-astra-high" target="_blank" rel="noopener noreferrer">Artificial Analysis model data</a>, captured September 7, 2026. Each score is the equal-weighted average of Terminal-Bench v2.1 and SciCode, rounded to the nearest integer. GPT-6 Sol and Luna have a dash until both component scores are verified. Claude Opus 5.5 also remains blank because a matching Terminal-Bench v2.1 and SciCode pair is not published; Terminal-Bench 4.0 results are not substituted. Artificial Analysis’s “xhigh” setting uses the same “xhigh” label here.</p>
+          <p>FrontierCode scores are manually maintained snapshots of the <a href="https://cognition.com/frontiercode" target="_blank" rel="noopener noreferrer">Cognition FrontierCode 1.1 Main leaderboard</a> (100 tasks). Existing GPT scores were captured September 22, 2026; Claude Opus 5.5's five effort-level scores were captured September 24, 2026 from “All reasoning levels” using the Claude Code harness. The displayed percentage is Cognition's weighted rubric score, not its pass rate; runs flagged for unfair internet use receive zero.</p>
+          <p>Existing DeepSWE Pass@1 ratings are manually maintained snapshots from the <a href="https://deepswe.datacurve.ai/" target="_blank" rel="noopener noreferrer">DeepSWE v1.1 leaderboard</a> (113 tasks), captured September 3, 2026 from its “All effort levels” view. The GPT-6 Sol and Luna max scores are <a href="https://openai.com/index/introducing-gpt-6-sol-and-luna/" target="_blank" rel="noopener noreferrer">OpenAI-reported</a> results published September 22, 2026; their other effort scores were not listed on the public leaderboard when checked. Claude Opus 5.5's max score is <a href="https://anthropic.com/claude-opus-5-5-system-card" target="_blank" rel="noopener noreferrer">Anthropic-reported</a> at 74.2%, the average of five max-effort trials, published September 22, 2026; it was not listed on the public leaderboard when checked September 24. This dashboard uses Pass@1 scores only, excluding cost, output-token, and agent-step metrics.</p>
         </div>
       </details>
     </section>
@@ -740,6 +740,7 @@
         { name: 'GPT-5.6 Luna', inputPrice: 0.2, outputPrice: 1.2, codingIndex: { low: 22, medium: 50, high: null, xhigh: 64, max: 67 }, frontierCode: { low: 15.4, medium: 25.7, high: 35.9, xhigh: 38.9, max: 39.8 }, deepSWE: { low: { score: 2, uncertainty: 1 }, medium: { score: 11, uncertainty: 1 }, high: { score: 44, uncertainty: 3 }, xhigh: { score: 57, uncertainty: 2 }, max: { score: 67, uncertainty: 4 } } },
         { name: 'GPT-5.6 Terra', inputPrice: 2, outputPrice: 12, codingIndex: { low: null, medium: null, high: 64, xhigh: 66, max: 71 }, frontierCode: { low: 24.1, medium: 33.9, high: 36.9, xhigh: 38.8, max: 41.3 }, deepSWE: { low: { score: 24, uncertainty: 1 }, medium: { score: 35, uncertainty: 3 }, high: { score: 54, uncertainty: 4 }, xhigh: { score: 60, uncertainty: 2 }, max: { score: 70, uncertainty: 3 } } },
         { name: 'GPT-5.6 Sol', inputPrice: 4, outputPrice: 20, codingIndex: { low: 67, medium: 72, high: 73, xhigh: 73, max: 73 }, frontierCode: { low: 35.4, medium: 39.9, high: 45.1, xhigh: 46.8, max: 47.5 }, deepSWE: { low: { score: 45, uncertainty: 2 }, medium: { score: 61, uncertainty: 2 }, high: { score: 69, uncertainty: 1 }, xhigh: { score: 71, uncertainty: 1 }, max: { score: 73, uncertainty: 3 } } },
+        { name: 'Claude Opus 5.5', inputPrice: 4, outputPrice: 20, codingIndex: { low: null, medium: null, high: null, xhigh: null, max: null }, frontierCode: { low: 47.3, medium: 54.6, high: 54.0, xhigh: 51.4, max: 54.4 }, frontierCodeCaptured: 'September 24, 2026', deepSWE: { low: null, medium: null, high: null, xhigh: null, max: { score: 74.2, source: 'anthropic' } } },
         { name: 'GPT-6 Astra', inputPrice: 10, outputPrice: 50, codingIndex: { low: 71, medium: 72, high: 73, xhigh: 72, max: 72 }, frontierCode: { low: 45.3, medium: 48.8, high: 50.9, xhigh: 50.6, max: 53.3 }, deepSWE: { low: { score: 67, uncertainty: 1 }, medium: { score: 73, uncertainty: 3 }, high: { score: 73, uncertainty: 3 }, xhigh: { score: 74, uncertainty: 3 }, max: { score: 73, uncertainty: 1 } } },
         { name: 'GPT-6 Sol', inputPrice: 2, outputPrice: 10, codingIndex: { low: null, medium: null, high: null, xhigh: null, max: null }, frontierCode: { low: 37.3, medium: 45.9, high: 47.7, xhigh: 48.4, max: 49.3 }, deepSWE: { low: null, medium: null, high: null, xhigh: null, max: { score: 68.8, source: 'openai' } } },
         { name: 'GPT-6 Luna', inputPrice: 0.1, outputPrice: 0.5, codingIndex: { low: null, medium: null, high: null, xhigh: null, max: null }, frontierCode: { low: 25.7, medium: 35.5, high: 37.3, xhigh: 37.1, max: 42.4 }, deepSWE: { low: null, medium: null, high: null, xhigh: null, max: { score: 66.6, source: 'openai' } } }
@@ -1001,7 +1002,7 @@
             ? `${formatNumber(row.frontierCode, 1)}%`
             : '—';
           const frontierCodeDescription = Number.isFinite(row.frontierCode)
-            ? `FrontierCode 1.1 Main weighted rubric score for ${row.reasoning} reasoning: ${frontierCodeValue}, captured September 22, 2026 from Cognition's 100-task leaderboard.`
+            ? `FrontierCode 1.1 Main weighted rubric score for ${row.reasoning} reasoning: ${frontierCodeValue}, captured ${row.model.frontierCodeCaptured || 'September 22, 2026'} from Cognition's 100-task leaderboard.`
             : `No FrontierCode 1.1 Main score published for ${row.reasoning} reasoning.`;
           const deepSWEValue = row.deepSWE
             ? `${formatNumber(row.deepSWE.score, 1)}%`
@@ -1009,6 +1010,8 @@
           const deepSWEDescription = row.deepSWE
             ? row.deepSWE.source === 'openai'
               ? `OpenAI-reported DeepSWE v1.1 Pass@1 score for ${row.reasoning} reasoning: ${deepSWEValue}, published September 22, 2026; this run was not listed on the public DeepSWE leaderboard when checked.`
+              : row.deepSWE.source === 'anthropic'
+                ? `Anthropic-reported DeepSWE v1.1 Pass@1 score for ${row.reasoning} reasoning: ${deepSWEValue}, published September 22, 2026 as the average of five max-effort trials; this run was not listed on the public DeepSWE leaderboard when checked September 24.`
               : `DeepSWE v1.1 Pass@1 rating for ${row.reasoning} reasoning: ${deepSWEValue}, based on 113 tasks; leaderboard snapshot captured September 3, 2026.`
             : 'No DeepSWE v1.1 Pass@1 rating published for this reasoning level.';
           const comparisonDirection = isComparison && selected
@@ -1144,7 +1147,7 @@
       exportButton.addEventListener('click', () => {
         const payload = {
           exportedAt: new Date().toISOString(),
-          description: 'GPT usage estimator heuristic settings',
+          description: 'GPT and Claude usage estimator heuristic settings',
           ...settings
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });

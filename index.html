@@ -442,7 +442,7 @@
 
     .value-cell {
       width: 1%;
-      min-width: 154px;
+      min-width: 0;
       padding-inline: 8px;
       text-align: right;
     }
@@ -456,19 +456,24 @@
       white-space: nowrap;
     }
 
-    .best-value {
+    .value-metric.is-best-value {
+      display: grid;
+      justify-items: end;
+      gap: 1px;
+    }
+
+    .best-value-amount {
       display: inline-flex;
       align-items: center;
-      min-height: 16px;
-      padding: 0 4px;
-      border: 1px solid color-mix(in srgb, var(--cheaper-row-accent) 55%, var(--border));
-      border-radius: 999px;
       background: var(--cheaper-row-bg);
       color: var(--cheaper-row-accent);
-      font-size: 0.5rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
+    }
+
+    .best-value-label {
+      color: var(--cheaper-row-accent);
+      font-size: 0.42rem;
+      font-weight: 700;
+      line-height: 1.1;
     }
 
     .score-cell {
@@ -1031,7 +1036,7 @@
               <td class="number deepswe-cell" title="${deepSWEDescription}" aria-label="${deepSWEDescription}">${deepSWEValue}</td>
               <td class="number">${formatNumber(row.multiplier, 1)}×</td>
               <td class="number value-cell" title="${costPerPointDescription}" aria-label="${costPerPointDescription}">
-                <span class="value-metric">${isBestValue ? '<span class="best-value">Best value</span>' : ''}<span>${costPerPointValue}</span></span>
+                <span class="value-metric${isBestValue ? ' is-best-value' : ''}">${isBestValue ? `<span class="best-value-amount">${costPerPointValue}</span><span class="best-value-label">Best Value</span>` : `<span>${costPerPointValue}</span>`}</span>
               </td>
               <td class="score-cell">
                 <div class="score-hover" title="API input: $${formatPrice(row.model.inputPrice)} / 1M tokens · API output: $${formatPrice(row.model.outputPrice)} / 1M tokens · Estimated cost: $${row.cost.toFixed(5)}" role="img" aria-label="Relative usage score ${row.score.toFixed(1)} times the ${referenceLabel}. API input: $${formatPrice(row.model.inputPrice)} per 1M tokens. API output: $${formatPrice(row.model.outputPrice)} per 1M tokens. Estimated cost: $${row.cost.toFixed(5)}.">

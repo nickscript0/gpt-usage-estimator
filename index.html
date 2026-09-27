@@ -364,6 +364,22 @@
       white-space: normal;
     }
 
+    .floating-table-header {
+      position: fixed;
+      z-index: 900;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-muted);
+      box-shadow: 0 4px 10px rgba(24, 36, 48, 0.12);
+    }
+
+    .floating-table-header[hidden] { display: none; }
+
+    .floating-table-header table {
+      margin: 0;
+      will-change: transform;
+    }
+
     tbody tr:last-child td { border-bottom: 0; }
 
     tbody tr { cursor: pointer; }
@@ -1231,6 +1247,87 @@
       renderEffortInputs();
       renderResults();
       searchInput.focus();
+    })();
+  </script>
+  <script>
+    (() => {
+      const scrollRegion = document.querySelector('.table-scroll');
+      const table = scrollRegion?.querySelector('table');
+      const tableHead = table?.querySelector('thead');
+      if (!scrollRegion || !table || !tableHead) return;
+
+      const floatingHeader = document.createElement('div');
+      floatingHeader.className = 'floating-table-header';
+      floatingHeader.setAttribute('aria-hidden', 'true');
+      floatingHeader.hidden = true;
+
+      const floatingTable = table.cloneNode(false);
+      floatingTable.append(table.querySelector('colgroup').cloneNode(true));
+      floatingTable.append(tableHead.cloneNode(true));
+      floatingTable.querySelectorAll('button').forEach((button) => {
+        button.tabIndex = -1;
+      });
+      floatingHeader.append(floatingTable);
+      document.body.append(floatingHeader);
+
+      function syncHeader() {
+        const updatedHead = table.querySelector('thead').cloneNode(true);
+        updatedHead.querySelectorAll('button').forEach((button) => {
+          button.tabIndex = -1;
+        });
+        floatingTable.querySelector('thead').replaceWith(updatedHead);
+        updateHeaderPosition();
+      }
+
+      function updateHeaderPosition() {
+        const headRect = table.querySelector('thead').getBoundingClientRect();
+        const regionRect = scrollRegion.getBoundingClientRect();
+        const headerHeight = headRect.height;
+        const shouldShow = headRect.top < 0 && regionRect.bottom > headerHeight;
+
+        if (!shouldShow) {
+          floatingHeader.hidden = true;
+          return;
+        }
+
+        floatingHeader.hidden = false;
+        floatingHeader.style.top = '0';
+        floatingHeader.style.left = `${regionRect.left}px`;
+        floatingHeader.style.width = `${scrollRegion.clientWidth}px`;
+        floatingTable.style.transform = `translateX(-${scrollRegion.scrollLeft}px)`;
+      }
+
+      let updateScheduled = false;
+      function scheduleUpdate() {
+        if (updateScheduled) return;
+        updateScheduled = true;
+        requestAnimationFrame(() => {
+          updateScheduled = false;
+          updateHeaderPosition();
+        });
+      }
+
+      floatingHeader.addEventListener('click', (event) => {
+        const button = event.target.closest('.sort-header[data-sort]');
+        if (!button) return;
+        const originalButton = [...tableHead.querySelectorAll('.sort-header[data-sort]')]
+          .find((candidate) => candidate.dataset.sort === button.dataset.sort);
+        originalButton?.click();
+      });
+
+      window.addEventListener('scroll', scheduleUpdate, { passive: true });
+      window.addEventListener('resize', scheduleUpdate);
+      scrollRegion.addEventListener('scroll', scheduleUpdate, { passive: true });
+      new MutationObserver(syncHeader).observe(table, {
+        attributes: true,
+        characterData: true,
+        childList: true,
+        subtree: true
+      });
+      if ('ResizeObserver' in window) {
+        new ResizeObserver(scheduleUpdate).observe(scrollRegion);
+      }
+      scheduleUpdate();
     })();
   </script>
   <div id="floating-tooltip" class="floating-tooltip" role="tooltip" hidden></div>
